@@ -175,7 +175,7 @@ namespace HS
             {
                 int offset = userToken.ReceiveEventArgs.Offset;
                 int count = userToken.ReceiveEventArgs.BytesTransferred;
-                userToken.AsyncSocketInvokeElement = new UploadSocketProtocol(this, userToken);
+        
                 if (count > 0) //处理接收数据
                 {
                     string msg;
@@ -187,9 +187,21 @@ namespace HS
                     {
                         msg = Encoding.UTF8.GetString(userToken.ReceiveEventArgs.Buffer, offset, count);
                     }
-                    if (msg.Contains("Sec-WebSocket-Key"))
+                    if ((userToken.AsyncSocketInvokeElement == null) & (msg.Contains("Sec-WebSocket-Key")))
                     {
+                        userToken.AsyncSocketInvokeElement = new DownloadSocketProtocol(this, userToken);
                         userToken.ConnectSocket.Send(PackageHandShakeData(userToken.ReceiveEventArgs.Buffer, count));
+                        bool willRaiseEvent = userToken.ConnectSocket.ReceiveAsync(userToken.ReceiveEventArgs); //投递接收请求
+                        if (!willRaiseEvent)
+                            ProcessReceive(userToken.ReceiveEventArgs);
+                    }
+                    else if ((userToken.AsyncSocketInvokeElement == null) & (!msg.Contains("Sec-WebSocket-Key")))
+                    {
+                        userToken.AsyncSocketInvokeElement = new UploadSocketProtocol(this, userToken);
+                        if (!userToken.AsyncSocketInvokeElement.ProcessReceive(userToken.ReceiveEventArgs.Buffer, offset, count))
+                        { //如果处理数据返回失败，则断开连接
+                            CloseClientSocket(userToken);
+                        }
                         bool willRaiseEvent = userToken.ConnectSocket.ReceiveAsync(userToken.ReceiveEventArgs); //投递接收请求
                         if (!willRaiseEvent)
                             ProcessReceive(userToken.ReceiveEventArgs);

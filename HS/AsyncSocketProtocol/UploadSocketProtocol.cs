@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Net.Sockets;
 using System.IO;
+using System.Windows.Forms;
 
 namespace HS
 {
@@ -39,336 +40,199 @@ namespace HS
                 m_asyncSocketServer.UploadSocketProtocolMgr.Remove(this);
             }
         }
-
-        public override bool ProcessCommand(byte[] buffer, int offset, int count) //处理分完包的数据，子类从这个方法继承
+        public override bool ProcessReceive(byte[] buffer, int offset, int count) //接收异步事件返回的数据，用于对数据进行缓存和分包
         {
-            UploadSocketCommand command = StrToCommand(m_incomingDataParser.Command);
-            m_outgoingDataAssembler.Clear();
-            m_outgoingDataAssembler.AddResponse();
-            m_outgoingDataAssembler.AddCommand(m_incomingDataParser.Command);
-            if (!CheckLogined(command)) //检测登录
+            m_activeDT = DateTime.UtcNow;
+            List<byte> DataList = new List<byte>();
+            DataList.AddRange(buffer.Take(count));
+            bool result = true;
+            try
             {
-                m_outgoingDataAssembler.AddFailure(ProtocolCode.UserHasLogined, "");
-                return DoSendResult();
-            }
-            if (command == UploadSocketCommand.Login)
-                return DoLogin();
-            else if (command == UploadSocketCommand.Active)
-                return DoActive();
-            else if (command == UploadSocketCommand.Dir)
-                return DoDir();
-            else if (command == UploadSocketCommand.CreateDir)
-                return DoCreateDir();
-            else if (command == UploadSocketCommand.DeleteDir)
-                return DoDeleteDir();
-            else if (command == UploadSocketCommand.FileList)
-                return DoFileList();
-            else if (command == UploadSocketCommand.DeleteFile)
-                return DoDeleteFile();
-            else if (command == UploadSocketCommand.Upload)
-                return DoUpload();
-            else if (command == UploadSocketCommand.Data)
-                return DoData(buffer, offset, count);
-            else if (command == UploadSocketCommand.Eof)
-                return DoEof();
-            else
-            {
-                return false;
-            }
-        }
-
-        public UploadSocketCommand StrToCommand(string command)
-        {
-            if (command.Equals(ProtocolKey.Active, StringComparison.CurrentCultureIgnoreCase))
-                return UploadSocketCommand.Active;
-            else if (command.Equals(ProtocolKey.Login, StringComparison.CurrentCultureIgnoreCase))
-                return UploadSocketCommand.Login;
-            else if (command.Equals(ProtocolKey.Dir, StringComparison.CurrentCultureIgnoreCase))
-                return UploadSocketCommand.Dir;
-            else if (command.Equals(ProtocolKey.CreateDir, StringComparison.CurrentCultureIgnoreCase))
-                return UploadSocketCommand.CreateDir;
-            else if (command.Equals(ProtocolKey.DeleteDir, StringComparison.CurrentCultureIgnoreCase))
-                return UploadSocketCommand.DeleteDir;
-            else if (command.Equals(ProtocolKey.FileList, StringComparison.CurrentCultureIgnoreCase))
-                return UploadSocketCommand.FileList;
-            else if (command.Equals(ProtocolKey.DeleteFile, StringComparison.CurrentCultureIgnoreCase))
-                return UploadSocketCommand.DeleteFile;
-            else if (command.Equals(ProtocolKey.Upload, StringComparison.CurrentCultureIgnoreCase))
-                return UploadSocketCommand.Upload;
-            else if (command.Equals(ProtocolKey.Data, StringComparison.CurrentCultureIgnoreCase))
-                return UploadSocketCommand.Data;
-            else if (command.Equals(ProtocolKey.Eof, StringComparison.CurrentCultureIgnoreCase))
-                return UploadSocketCommand.Eof;
-            else
-                return UploadSocketCommand.None;
-        }
-
-        public bool CheckLogined(UploadSocketCommand command)
-        {
-            if ((command == UploadSocketCommand.Login) | (command == UploadSocketCommand.Active))
-                return true;
-            else
-                return m_logined;
-        }
-
-        public bool DoDir()
-        {
-            string parentDir = "";
-            if (m_incomingDataParser.GetValue(ProtocolKey.ParentDir, ref parentDir))
-            {
-                if (parentDir == "")
-                    parentDir = FrmMain.FileDirectory;
-                else
-                    parentDir = Path.Combine(FrmMain.FileDirectory, parentDir);
-                if (Directory.Exists(parentDir))
+                while (DataList.Count > 6)//(DataCount > sizeof(int))
                 {
-                    string[] subDirectorys = Directory.GetDirectories(parentDir, "*", SearchOption.TopDirectoryOnly);
-                    m_outgoingDataAssembler.AddSuccess();
-                    char[] directorySeparator = new char[1];
-                    directorySeparator[0] = Path.DirectorySeparatorChar;
-                    for (int i = 0; i < subDirectorys.Length; i++)
+                    if (DataList[0] == 0x68)
                     {
-                        string[] directoryName = subDirectorys[i].Split(directorySeparator, StringSplitOptions.RemoveEmptyEntries);
-                        m_outgoingDataAssembler.AddValue(ProtocolKey.Item, directoryName[directoryName.Length - 1]);
-                    }
-                }
-                else
-                    m_outgoingDataAssembler.AddFailure(ProtocolCode.DirNotExist, "");
-            }
-            else
-                m_outgoingDataAssembler.AddFailure(ProtocolCode.ParameterError, "");
-            return DoSendResult();
-        }
-
-        public bool DoCreateDir()
-        {
-            string parentDir = "";
-            string dirName = "";
-            if (m_incomingDataParser.GetValue(ProtocolKey.ParentDir, ref parentDir) & m_incomingDataParser.GetValue(ProtocolKey.DirName, ref dirName))
-            {
-                if (parentDir == "")
-                    parentDir = FrmMain.FileDirectory;
-                else
-                    parentDir = Path.Combine(FrmMain.FileDirectory, parentDir);                
-                if (Directory.Exists(parentDir))
-                {
-                    try
-                    {
-                        parentDir = Path.Combine(parentDir, dirName);
-                        Directory.CreateDirectory(parentDir);
-                        m_outgoingDataAssembler.AddSuccess();
-                    }
-                    catch (Exception E)
-                    {
-                        m_outgoingDataAssembler.AddFailure(ProtocolCode.CreateDirError, E.Message);
-                    }
-                }
-                else
-                    m_outgoingDataAssembler.AddFailure(ProtocolCode.DirNotExist, "");
-            }
-            else
-                m_outgoingDataAssembler.AddFailure(ProtocolCode.ParameterError, "");
-            return DoSendResult();
-        }
-
-        public bool DoDeleteDir()
-        {
-            string parentDir = "";
-            string dirName = "";
-            if (m_incomingDataParser.GetValue(ProtocolKey.ParentDir, ref parentDir) & m_incomingDataParser.GetValue(ProtocolKey.DirName, ref dirName))
-            {
-                if (parentDir == "")
-                    parentDir = FrmMain.FileDirectory;
-                else
-                    parentDir = Path.Combine(FrmMain.FileDirectory, parentDir);
-                if (Directory.Exists(parentDir))
-                {
-                    try
-                    {
-                        parentDir = Path.Combine(parentDir, dirName);
-                        Directory.Delete(parentDir, true);
-                        m_outgoingDataAssembler.AddSuccess();
-                    }
-                    catch (Exception E)
-                    {
-                        m_outgoingDataAssembler.AddFailure(ProtocolCode.DeleteDirError, E.Message);
-                    }
-                }
-                else
-                    m_outgoingDataAssembler.AddFailure(ProtocolCode.DirNotExist, "");
-            }
-            else
-                m_outgoingDataAssembler.AddFailure(ProtocolCode.ParameterError, "");
-            return DoSendResult();
-        }
-
-        public bool DoFileList()
-        {
-            string dirName = "";
-            if (m_incomingDataParser.GetValue(ProtocolKey.DirName, ref dirName))
-            {
-                if (dirName == "")
-                    dirName = FrmMain.FileDirectory;
-                else
-                    dirName = Path.Combine(FrmMain.FileDirectory, dirName);
-                if (Directory.Exists(dirName))
-                {
-                    string[] files = Directory.GetFiles(dirName);
-                    m_outgoingDataAssembler.AddSuccess();
-                    Int64 fileSize = 0;
-                    for (int i = 0; i < files.Length; i++)
-                    {
-                        FileInfo fileInfo = new FileInfo(files[i]);
-                        fileSize = fileInfo.Length;
-                        m_outgoingDataAssembler.AddValue(ProtocolKey.Item, fileInfo.Name + ProtocolKey.TextSeperator + fileSize.ToString());
-                    }
-                }
-                else
-                    m_outgoingDataAssembler.AddFailure(ProtocolCode.DirNotExist, "");
-            }
-            else
-                m_outgoingDataAssembler.AddFailure(ProtocolCode.ParameterError, "");
-            return DoSendResult();
-        }
-
-        public bool DoDeleteFile()
-        {
-            string dirName = "";
-            if (m_incomingDataParser.GetValue(ProtocolKey.DirName, ref dirName))
-            {
-                if (dirName == "")
-                    dirName = FrmMain.FileDirectory;
-                else
-                    dirName = Path.Combine(FrmMain.FileDirectory, dirName);
-                string fileName = "";
-                if (Directory.Exists(dirName))
-                {
-                    try
-                    {
-                        List<string> files = m_incomingDataParser.GetValue(ProtocolKey.Item);
-                        for (int i = 0; i < files.Count; i++)
+                        //按照长度分包
+                        int packetLength = (DataList[10] + DataList[11] * 256);    // AuxiliaryMethod.byte2ToInt(DataList.ToArray(), 10); //获取包长度
+                        if (DataList.Count > packetLength + 14)
                         {
-                            fileName = Path.Combine(dirName, files[i]);
-                            File.Delete(fileName);
+                            if (DataList[packetLength + 14] == 0x16)
+                            {
+                                byte[] CRC = AuxiliaryMethod.crc16(DataList.ToArray(), packetLength + 12);//CRC校验
+                                if ((CRC[0] == DataList[packetLength + 12]) && (CRC[1] == DataList[packetLength + 13])) //如果CRC16校验正确，数据接收成功
+                                {
+                                    result = ProcessPacket(DataList.Take(packetLength + 15).ToArray());
+                                    DataList.RemoveRange(0, packetLength + 15); //从缓存中清理
+                                }
+                                else
+                                {
+                                    DataList.RemoveRange(0, packetLength + 15); //数据出错从缓存中清理
+                                }
+                            }
+                            else
+                            {
+                                DataList.RemoveAt(0);
+                            }
                         }
-                        m_outgoingDataAssembler.AddSuccess();
-                    }
-                    catch (Exception E)
-                    {
-                        m_outgoingDataAssembler.AddFailure(ProtocolCode.DeleteFileFailed, E.Message);
-                    }
-                }
-                else
-                    m_outgoingDataAssembler.AddFailure(ProtocolCode.DirNotExist, "");
-            }
-            else
-                m_outgoingDataAssembler.AddFailure(ProtocolCode.ParameterError, "");
-            return DoSendResult();
-        }
-
-        public bool DoUpload()
-        {
-            string dirName = "";
-            string fileName = "";
-            if (m_incomingDataParser.GetValue(ProtocolKey.DirName, ref dirName) & m_incomingDataParser.GetValue(ProtocolKey.FileName, ref fileName))
-            {
-                if (dirName == "")
-                    dirName = FrmMain.FileDirectory;
-                else
-                    dirName = Path.Combine(FrmMain.FileDirectory, dirName);
-                fileName = Path.Combine(dirName, fileName);
-                if (m_fileStream != null) //关闭上次传输的文件
-                {
-                    m_fileStream.Close();
-                    m_fileStream = null;
-                    m_fileName = "";
-                }
-                if (File.Exists(fileName))
-                {
-                    if (!CheckFileInUse(fileName)) //检测文件是否正在使用中
-                    {
-                        m_fileName = fileName;
-                        m_fileStream = new FileStream(fileName, FileMode.Open, FileAccess.ReadWrite);
-                        m_fileStream.Position = m_fileStream.Length; //文件移到末尾
-                        m_outgoingDataAssembler.AddSuccess();
-                        m_outgoingDataAssembler.AddValue(ProtocolKey.FileSize, m_fileStream.Length);
+                        else
+                        {
+                            return true;
+                        }
                     }
                     else
                     {
-                        m_outgoingDataAssembler.AddFailure(ProtocolCode.FileIsInUse, "");
+                        DataList.RemoveAt(0);
                     }
-                }
-                else
-                {
-                    m_fileName = fileName;
-                    m_fileStream = new FileStream(fileName, FileMode.OpenOrCreate, FileAccess.ReadWrite);
-                    m_fileStream.Position = m_fileStream.Length; //文件移到末尾
-                    m_outgoingDataAssembler.AddSuccess();
-                    m_outgoingDataAssembler.AddValue(ProtocolKey.FileSize, m_fileStream.Length);
-                }
+                }//while结束点
+            }                               //TRY
+            catch (Exception e)
+            {
+                //以后要注释掉
+                MessageBox.Show(e.ToString());
             }
-            else
-                m_outgoingDataAssembler.AddFailure(ProtocolCode.ParameterError, "");
-            return DoSendResult();
+
+            finally
+            {
+                GC.Collect();
+            }
+            return true;
         }
 
-        //检测文件是否正在使用中，如果正在使用中则检测是否被上传协议占用，如果占用则关闭,真表示正在使用中，并没有关闭
-        public bool CheckFileInUse(string fileName)
+        public override bool ProcessPacket(byte[] buffer) //处理分完包后的数据，把命令和数据分开，并对命令进行解析
         {
-            if (BasicFunc.IsFileInUse(fileName))
+            int deviceID = AuxiliaryMethod.byte4ToInt(buffer, 1);
+            //string gateWay = gate.ToString("d8");
+            if (buffer[9] == 0xFF)
             {
-                bool result = true;
-                lock (m_asyncSocketServer.UploadSocketProtocolMgr)
+                m_asyncSocketUserToken.GateWayId = deviceID;
+                m_asyncSocketUserToken.EndPoints = m_asyncSocketUserToken.ConnectSocket.RemoteEndPoint;
+                string sql = "UPDATE DeviceInfo SET connectDT='" + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff") + "' WHERE DeviceID = '" + deviceID + "' ";
+                DbHelperSQL.ExecuteSql(sql);
+                sql = "UPDATE DeviceInfo SET [ip]='" + m_asyncSocketUserToken.EndPoints.ToString() + "' WHERE DeviceID = '" + deviceID + "' ";
+                DbHelperSQL.ExecuteSql(sql);
+                sql = "select * from DevicePing where DeviceID = " + deviceID.ToString();
+                //在DevicePing表中添加连接
+                if (DbHelperSQL.Execute(sql) == "")
                 {
-                    UploadSocketProtocol uploadSocketProtocol = null;
-                    for (int i = 0; i < m_asyncSocketServer.UploadSocketProtocolMgr.Count(); i++)
-                    {
-                        uploadSocketProtocol = m_asyncSocketServer.UploadSocketProtocolMgr.ElementAt(i);
-                        if (fileName.Equals(uploadSocketProtocol.FileName, StringComparison.CurrentCultureIgnoreCase))
-                        {
-                            lock (uploadSocketProtocol.AsyncSocketUserToken) //AsyncSocketUserToken有多个
-                            {
-                                m_asyncSocketServer.CloseClientSocket(uploadSocketProtocol.AsyncSocketUserToken);
-                            }
-                            result = false;
-                        }
-                    }
+                    sql = "INSERT INTO DevicePing VALUES ('" + deviceID.ToString() + "','" + m_asyncSocketUserToken.EndPoints.ToString() + "','" + DateTime.Now.ToString("yyyy -MM-dd HH:mm:ss.fff") + "') ";
+                    // sql = "insert into DevicePing(DeviceID, ip, activeDT) select " + deviceID.ToString() + "," + m_asyncSocketUserToken.EndPoints.ToString() + ",(" + DateTime.Now.ToString("yyyy -MM-dd HH:mm:ss.fff") + ") from DevicePing  where not exists(select * from DevicePing where DeviceID = "+ deviceID.ToString() + ")";
+                    DbHelperSQL.ExecuteSql(sql);
                 }
-                return result;
-            }
-            else
-                return false;
-        }
-
-        public bool DoData(byte[] buffer, int offset, int count)
-        {
-            if (m_fileStream == null)
-            {
-                m_outgoingDataAssembler.AddFailure(ProtocolCode.NotOpenFile, "");
-                return false;
-            }
-            else
-            {
-                m_fileStream.Write(buffer, offset, count);
                 return true;
-                //m_outgoingDataAssembler.AddSuccess();
-                //m_outgoingDataAssembler.AddValue(ProtocolKey.Count, count); //返回读取个数
             }
-            //return DoSendResult(); //接收数据不发回响应
-        }
-
-        public bool DoEof()
-        {
-            if (m_fileStream == null)
-                m_outgoingDataAssembler.AddFailure(ProtocolCode.NotOpenFile, "");
+            if (buffer[9] == 0xF0)
+            {
+                m_asyncSocketUserToken.EndPoints = m_asyncSocketUserToken.ConnectSocket.RemoteEndPoint;
+                string sql = "UPDATE DevicePing SET activeDT='" + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff") + "' WHERE DeviceID = '" + deviceID + "' ";
+                DbHelperSQL.ExecuteSql(sql);
+                sql = "UPDATE DevicePing SET ip='" + m_asyncSocketUserToken.EndPoints.ToString() + "' WHERE DeviceID = '" + deviceID + "' ";
+                DbHelperSQL.ExecuteSql(sql);
+                return true;
+            }
             else
             {
-                m_fileStream.Close();
-                m_fileStream = null;
-                m_fileName = "";
-                m_outgoingDataAssembler.AddSuccess();
+                // 创建目录时如果目录已存在，则不会重新创建目录，且不会报错。创建目录时会自动创建路径中各级不存在的目录。
+                //通过Path类的Combine方法可以合并路径
+                string activeDir = @"D:\HS";
+                string newPath = Path.Combine(activeDir, deviceID.ToString());
+                Directory.CreateDirectory(newPath);
+
+                #region    上传数据
+                string sql = "UPDATE DeviceInfo SET activeDT='" + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff") + "' WHERE DeviceID = '" + deviceID + "' ";
+                DbHelperSQL.ExecuteSql(sql);
+                //string cmd = "select pathName from DeviceInfo where DeviceID='" + deviceID + "'";
+                //string path = DbHelperSQL.Execute(cmd).Trim();
+                switch (buffer[9])
+                {
+                    case 0x5A:
+                        newPath = Path.Combine(newPath, "name.xml");
+                        break;
+                    case 0:
+                        newPath = Path.Combine(newPath, "lasttime.xml");
+                        break;
+                    case 1:
+                        newPath = Path.Combine(newPath, "mode1.xml");
+                        break;
+                    case 2:
+                        newPath = Path.Combine(newPath, "mode2.xml");
+                        break;
+                    case 3:
+                        newPath = Path.Combine(newPath, "mode3.xml");
+                        break;
+                    case 4:
+                        newPath = Path.Combine(newPath, "mode4.xml");
+                        break;
+                    case 5:
+                        newPath = Path.Combine(newPath, "mode5.xml");
+                        break;
+                    case 6:
+                        newPath = Path.Combine(newPath, "mode6.xml");
+                        break;
+                    case 7:
+                        newPath = Path.Combine(newPath, "mode7.xml");
+                        break;
+                    case 8:
+                        newPath = Path.Combine(newPath, "mode8.xml");
+                        break;
+                    case 9:
+                        newPath = Path.Combine(newPath, "mode9.xml");
+                        break;
+                    case 10:
+                        newPath = Path.Combine(newPath, "mode10.xml");
+                        break;
+                    case 11:
+                        newPath = Path.Combine(newPath, "mode11.xml");
+                        break;
+                    case 12:
+                        newPath = Path.Combine(newPath, "mode12.xml");
+                        break;
+                    case 13:
+                        newPath = Path.Combine(newPath, "mode13.xml");
+                        break;
+                    case 14:
+                        newPath = Path.Combine(newPath, "mode14.xml");
+                        break;
+                    case 15:
+                        newPath = Path.Combine(newPath, "mode15.xml");
+                        break;
+                    case 16:
+                        newPath = Path.Combine(newPath, "mode16.xml");
+                        break;
+                    case 17:
+                        newPath = Path.Combine(newPath, "mode17.xml");
+                        break;
+                    case 18:
+                        newPath = Path.Combine(newPath, "mode18.xml");
+                        break;
+                    case 19:
+                        newPath = Path.Combine(newPath, "mode19.xml");
+                        break;
+                    case 20:
+                        newPath = Path.Combine(newPath, "mode20.xml");
+                        break;
+                    case 21:
+                        newPath = Path.Combine(newPath, "mode21.xml");
+                        break;
+                    case 22:
+                        newPath = Path.Combine(newPath, "mode22.xml");
+                        break;
+                    case 23:
+                        newPath = Path.Combine(newPath, "mode23.xml");
+                        break;
+                    case 24:
+                        newPath = Path.Combine(newPath, "mode24.xml");
+                        break;
+                    default:
+                        break;
+                }
+                using (FileStream fsWrite = new FileStream(newPath, FileMode.OpenOrCreate, FileAccess.Write))
+                {
+                    fsWrite.Write(buffer, 12, buffer.Length - 15);  //需要修改
+                }
+                return true;
+                #endregion
             }
-            return DoSendResult();
+
         }
     }
 
