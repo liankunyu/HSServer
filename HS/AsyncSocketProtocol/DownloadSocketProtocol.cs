@@ -53,7 +53,7 @@ namespace HS
             m_activeDT = DateTime.UtcNow;
             List<byte> DataList = new List<byte>();
             DataList.AddRange(buffer.Take(count));
-        
+
             try
             {
                 while (DataList.Count > 6)//(DataCount > sizeof(int))
@@ -146,121 +146,124 @@ namespace HS
         public bool SendPacket(string str)
         {
             #region  发送函数
-            int device_ID = int.Parse(str);
+            //Web发送的命令格式为deviceID-文件编号
+            string[] sArray = str.Split('-');
+            int device_ID = int.Parse(sArray[0]);
+            int fileCode = int.Parse(sArray[1]);
             string cmd = "select pathName from DeviceInfo where DeviceID='" + device_ID + "'";//这一步可以不用，直接用变量加路径
             string path = DbHelperSQL.Execute(cmd).Trim();
-            for (int i = 99; i <= 115; i++)
+            //for (int i = 99; i <= 115; i++)
+            //{
+            string newPath = "";
+            //switch (fileCode)
+            //{
+            //    case 0x5A:
+            //        newPath = Path.Combine(path, "name.xml");
+            //        break;
+            //    case 0:
+                    newPath = Path.Combine(path, "tmp.xml");
+            //        break;
+            //    case 1:
+            //        newPath = Path.Combine(path, "mode1.xml");
+            //        break;
+            //    case 2:
+            //        newPath = Path.Combine(path, "mode2.xml");
+            //        break;
+            //    case 3:
+            //        newPath = Path.Combine(path, "mode3.xml");
+            //        break;
+            //    case 4:
+            //        newPath = Path.Combine(path, "mode4.xml");
+            //        break;
+            //    case 5:
+            //        newPath = Path.Combine(path, "mode5.xml");
+            //        break;
+            //    case 6:
+            //        newPath = Path.Combine(path, "mode6.xml");
+            //        break;
+            //    case 7:
+            //        newPath = Path.Combine(path, "mode7.xml");
+            //        break;
+            //    case 8:
+            //        newPath = Path.Combine(path, "mode8.xml");
+            //        break;
+            //    case 9:
+            //        newPath = Path.Combine(path, "mode9.xml");
+            //        break;
+            //    case 10:
+            //        newPath = Path.Combine(path, "mode10.xml");
+            //        break;
+            //    case 11:
+            //        newPath = Path.Combine(path, "mode11.xml");
+            //        break;
+            //    case 12:
+            //        newPath = Path.Combine(path, "mode12.xml");
+            //        break;
+            //    case 13:
+            //        newPath = Path.Combine(path, "mode13.xml");
+            //        break;
+            //    case 14:
+            //        newPath = Path.Combine(path, "mode14.xml");
+            //        break;
+            //    case 15:
+            //        newPath = Path.Combine(path, "mode15.xml");
+            //        break;
+            //    case 16:
+            //        newPath = Path.Combine(path, "mode16.xml");
+            //        break;
+            //    case 17:
+            //        newPath = Path.Combine(path, "mode17.xml");
+            //        break;
+            //    case 18:
+            //        newPath = Path.Combine(path, "mode18.xml");
+            //        break;
+            //    case 19:
+            //        newPath = Path.Combine(path, "mode19.xml");
+            //        break;
+            //    case 20:
+            //        newPath = Path.Combine(path, "mode20.xml");
+            //        break;
+            //    case 21:
+            //        newPath = Path.Combine(path, "mode21.xml");
+            //        break;
+            //    case 22:
+            //        newPath = Path.Combine(path, "mode22.xml");
+            //        break;
+            //    case 23:
+            //        newPath = Path.Combine(path, "mode23.xml");
+            //        break;
+            //    case 24:
+            //        newPath = Path.Combine(path, "mode24.xml");
+            //        break;
+            //    default:
+            //        break;
+            //}
+            byte[] buf = { 0X68, 0, 0, 0, 0, 0, 0, 0, 0, (byte)fileCode };
+            using (FileStream fsRead = new FileStream(newPath, FileMode.Open, FileAccess.Read))
             {
-                string newPath = "";
-                switch (i)
-                {
-                    case 99:
-                        newPath = Path.Combine(path, "name.xml");
-                        break;
-                    case 100:
-                        newPath = Path.Combine(path, "lasttime.xml");
-                        break;
-                    case 101:
-                        newPath = Path.Combine(path, "mode1.xml");
-                        break;
-                    case 102:
-                        newPath = Path.Combine(path, "mode2.xml");
-                        break;
-                    case 103:
-                        newPath = Path.Combine(path, "mode3.xml");
-                        break;
-                    case 104:
-                        newPath = Path.Combine(path, "mode4.xml");
-                        break;
-                    case 105:
-                        newPath = Path.Combine(path, "mode5.xml");
-                        break;
-                    case 106:
-                        newPath = Path.Combine(path, "mode6.xml");
-                        break;
-                    case 107:
-                        newPath = Path.Combine(path, "mode7.xml");
-                        break;
-                    case 108:
-                        newPath = Path.Combine(path, "mode8.xml");
-                        break;
-                    case 109:
-                        newPath = Path.Combine(path, "mode9.xml");
-                        break;
-                    case 110:
-                        newPath = Path.Combine(path, "mode10.xml");
-                        break;
-                    case 111:
-                        newPath = Path.Combine(path, "mode11.xml");
-                        break;
-                    case 112:
-                        newPath = Path.Combine(path, "mode12.xml");
-                        break;
-                    case 113:
-                        newPath = Path.Combine(path, "mode13.xml");
-                        break;
-                    case 114:
-                        newPath = Path.Combine(path, "mode14.xml");
-                        break;
-                    case 115:
-                        newPath = Path.Combine(path, "mode15.xml");
-                        break;
-                    case 116:
-                        newPath = Path.Combine(path, "mode16.xml");
-                        break;
-                    case 117:
-                        newPath = Path.Combine(path, "mode17.xml");
-                        break;
-                    case 118:
-                        newPath = Path.Combine(path, "mode18.xml");
-                        break;
-                    case 119:
-                        newPath = Path.Combine(path, "mode19.xml");
-                        break;
-                    case 120:
-                        newPath = Path.Combine(path, "mode20.xml");
-                        break;
-                    case 121:
-                        newPath = Path.Combine(path, "mode21.xml");
-                        break;
-                    case 122:
-                        newPath = Path.Combine(path, "mode22.xml");
-                        break;
-                    case 123:
-                        newPath = Path.Combine(path, "mode23.xml");
-                        break;
-                    case 124:
-                        newPath = Path.Combine(path, "mode24.xml");
-                        break;
-                    default:
-                        break;
-                }
-                byte[] buf = { 0X68, 0, 0, 0, 0, 0, 0, 0, 0, (byte)i };
-                using (FileStream fsRead = new FileStream(newPath, FileMode.Open, FileAccess.Read))
-                {
 
-                    byte[] bf = new byte[1024 * 100];
-                    int r = fsRead.Read(bf, 0, bf.Length);
-                    byte[] copy = new byte[r];
-                    List<byte> listSend = new List<byte>();
-                    listSend.AddRange(buf);
-                    listSend.Add((byte)(r & 0x00FF));//低字节
-                    listSend.Add((byte)(r >> 8));//高字节
-                    Array.Copy(bf, copy, r);
-                    listSend.AddRange(copy);
-                    byte[] CRC = AuxiliaryMethod.crc16(listSend.ToArray(), listSend.Count);//调用校验
-                    listSend.AddRange(CRC);
-                    listSend.Add(0x16);
-                    AsyncSocketUserToken UserToken = m_asyncSocketServer.AsyncSocketUserTokenList.UseKey(device_ID);
-                    lock (UserToken)
-                    {
-                        UserToken.ConnectSocket.Send(listSend.ToArray());
-                        //    UserToken.SendEventArgs.ConnectSocket.Send(listSend.ToArray());
-                    }
-                    listSend.Clear();
-                    Thread.Sleep(200);
+                byte[] bf = new byte[1024 * 100];
+                int r = fsRead.Read(bf, 0, bf.Length);
+                byte[] copy = new byte[r];
+                List<byte> listSend = new List<byte>();
+                listSend.AddRange(buf);
+                listSend.Add((byte)(r & 0x00FF));//低字节
+                listSend.Add((byte)(r >> 8));//高字节
+                Array.Copy(bf, copy, r);
+                listSend.AddRange(copy);
+                byte[] CRC = AuxiliaryMethod.crc16(listSend.ToArray(), listSend.Count);//调用校验
+                listSend.AddRange(CRC);
+                listSend.Add(0x16);
+                AsyncSocketUserToken UserToken = m_asyncSocketServer.AsyncSocketUserTokenList.UseKey(device_ID);
+                lock (UserToken)
+                {
+                    UserToken.ConnectSocket.Send(listSend.ToArray());
+                    //    UserToken.SendEventArgs.ConnectSocket.Send(listSend.ToArray());
                 }
+                listSend.Clear();
+                Thread.Sleep(200);
             }
+            //}
             string m_message = "send Success";
             m_asyncSocketUserToken.ConnectSocket.Send(PackData(m_message).ToArray());
             return true;
@@ -300,7 +303,7 @@ namespace HS
 
             return contentBytes;
         }
-        
+
     }
 
     public class DownloadSocketProtocolMgr : Object

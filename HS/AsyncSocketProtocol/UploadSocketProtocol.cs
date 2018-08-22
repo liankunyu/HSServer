@@ -142,89 +142,89 @@ namespace HS
                 DbHelperSQL.ExecuteSql(sql);
                 //string cmd = "select pathName from DeviceInfo where DeviceID='" + deviceID + "'";
                 //string path = DbHelperSQL.Execute(cmd).Trim();
-                switch (buffer[9])
-                {
-                    case 0x5A:
-                        newPath = Path.Combine(newPath, "name.xml");
-                        break;
-                    case 0:
-                        newPath = Path.Combine(newPath, "lasttime.xml");
-                        break;
-                    case 1:
-                        newPath = Path.Combine(newPath, "mode1.xml");
-                        break;
-                    case 2:
-                        newPath = Path.Combine(newPath, "mode2.xml");
-                        break;
-                    case 3:
-                        newPath = Path.Combine(newPath, "mode3.xml");
-                        break;
-                    case 4:
-                        newPath = Path.Combine(newPath, "mode4.xml");
-                        break;
-                    case 5:
-                        newPath = Path.Combine(newPath, "mode5.xml");
-                        break;
-                    case 6:
-                        newPath = Path.Combine(newPath, "mode6.xml");
-                        break;
-                    case 7:
-                        newPath = Path.Combine(newPath, "mode7.xml");
-                        break;
-                    case 8:
-                        newPath = Path.Combine(newPath, "mode8.xml");
-                        break;
-                    case 9:
-                        newPath = Path.Combine(newPath, "mode9.xml");
-                        break;
-                    case 10:
-                        newPath = Path.Combine(newPath, "mode10.xml");
-                        break;
-                    case 11:
-                        newPath = Path.Combine(newPath, "mode11.xml");
-                        break;
-                    case 12:
-                        newPath = Path.Combine(newPath, "mode12.xml");
-                        break;
-                    case 13:
-                        newPath = Path.Combine(newPath, "mode13.xml");
-                        break;
-                    case 14:
-                        newPath = Path.Combine(newPath, "mode14.xml");
-                        break;
-                    case 15:
-                        newPath = Path.Combine(newPath, "mode15.xml");
-                        break;
-                    case 16:
-                        newPath = Path.Combine(newPath, "mode16.xml");
-                        break;
-                    case 17:
-                        newPath = Path.Combine(newPath, "mode17.xml");
-                        break;
-                    case 18:
-                        newPath = Path.Combine(newPath, "mode18.xml");
-                        break;
-                    case 19:
-                        newPath = Path.Combine(newPath, "mode19.xml");
-                        break;
-                    case 20:
-                        newPath = Path.Combine(newPath, "mode20.xml");
-                        break;
-                    case 21:
-                        newPath = Path.Combine(newPath, "mode21.xml");
-                        break;
-                    case 22:
-                        newPath = Path.Combine(newPath, "mode22.xml");
-                        break;
-                    case 23:
-                        newPath = Path.Combine(newPath, "mode23.xml");
-                        break;
-                    case 24:
-                        newPath = Path.Combine(newPath, "mode24.xml");
-                        break;
-                    default:
-                        break;
-                }
+                //switch (buffer[9])
+                //{
+                //    case 0x5A:
+                //        newPath = Path.Combine(newPath, "name.xml");
+                //        break;
+                //    case 0:
+                newPath = Path.Combine(newPath, "lasttime.xml");
+                //        break;
+                //    case 1:
+                //        newPath = Path.Combine(newPath, "mode1.xml");
+                //        break;
+                //    case 2:
+                //        newPath = Path.Combine(newPath, "mode2.xml");
+                //        break;
+                //    case 3:
+                //        newPath = Path.Combine(newPath, "mode3.xml");
+                //        break;
+                //    case 4:
+                //        newPath = Path.Combine(newPath, "mode4.xml");
+                //        break;
+                //    case 5:
+                //        newPath = Path.Combine(newPath, "mode5.xml");
+                //        break;
+                //    case 6:
+                //        newPath = Path.Combine(newPath, "mode6.xml");
+                //        break;
+                //    case 7:
+                //        newPath = Path.Combine(newPath, "mode7.xml");
+                //        break;
+                //    case 8:
+                //        newPath = Path.Combine(newPath, "mode8.xml");
+                //        break;
+                //    case 9:
+                //        newPath = Path.Combine(newPath, "mode9.xml");
+                //        break;
+                //    case 10:
+                //        newPath = Path.Combine(newPath, "mode10.xml");
+                //        break;
+                //    case 11:
+                //        newPath = Path.Combine(newPath, "mode11.xml");
+                //        break;
+                //    case 12:
+                //        newPath = Path.Combine(newPath, "mode12.xml");
+                //        break;
+                //    case 13:
+                //        newPath = Path.Combine(newPath, "mode13.xml");
+                //        break;
+                //    case 14:
+                //        newPath = Path.Combine(newPath, "mode14.xml");
+                //        break;
+                //    case 15:
+                //        newPath = Path.Combine(newPath, "mode15.xml");
+                //        break;
+                //    case 16:
+                //        newPath = Path.Combine(newPath, "mode16.xml");
+                //        break;
+                //    case 17:
+                //        newPath = Path.Combine(newPath, "mode17.xml");
+                //        break;
+                //    case 18:
+                //        newPath = Path.Combine(newPath, "mode18.xml");
+                //        break;
+                //    case 19:
+                //        newPath = Path.Combine(newPath, "mode19.xml");
+                //        break;
+                //    case 20:
+                //        newPath = Path.Combine(newPath, "mode20.xml");
+                //        break;
+                //    case 21:
+                //        newPath = Path.Combine(newPath, "mode21.xml");
+                //        break;
+                //    case 22:
+                //        newPath = Path.Combine(newPath, "mode22.xml");
+                //        break;
+                //    case 23:
+                //        newPath = Path.Combine(newPath, "mode23.xml");
+                //        break;
+                //    case 24:
+                //        newPath = Path.Combine(newPath, "mode24.xml");
+                //        break;
+                //    default:
+                //        break;
+                //}
                 using (FileStream fsWrite = new FileStream(newPath, FileMode.OpenOrCreate, FileAccess.Write))
                 {
                     fsWrite.Write(buffer, 12, buffer.Length - 15);  //需要修改
