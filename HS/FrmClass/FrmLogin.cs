@@ -42,8 +42,10 @@ namespace HS
                     string cmd = "select passWord from UserInfo where userName='" + Id + "'";
                     if (DbHelperSQL.Execute(cmd).Trim() == password)
                     {
-                        MessageBox.Show("      登陆成功！");
+                        //MessageBox.Show("      登陆成功！");
                         string Sqlin = "insert into dlsjb values ('" + Id + "','" + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff") + "')";
+                        DbHelperSQL.ExecuteSql(Sqlin);
+                        Sqlin = "Truncate table DevicePing";//清除表中所有行，保留表结构、与delete类似比delete速度快,而且效率高，使用的系统和事务日志资源少
                         DbHelperSQL.ExecuteSql(Sqlin);
                         this.Hide();
                     }
