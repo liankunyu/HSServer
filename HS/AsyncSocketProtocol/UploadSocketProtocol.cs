@@ -106,10 +106,10 @@ namespace HS
             {
                 m_asyncSocketUserToken.GateWayId = deviceID;
                 m_asyncSocketUserToken.EndPoints = m_asyncSocketUserToken.ConnectSocket.RemoteEndPoint;
-                string sql = "UPDATE DeviceInfo SET connectDT='" + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff") + "' WHERE DeviceID = '" + deviceID + "' ";
+                string sql = "UPDATE DeviceInfo SET connectDT='" + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff") + "',ip='" + m_asyncSocketUserToken.EndPoints.ToString() + "' WHERE DeviceID = '" + deviceID + "' ";
                 DbHelperSQL.ExecuteSql(sql);
-                sql = "UPDATE DeviceInfo SET [ip]='" + m_asyncSocketUserToken.EndPoints.ToString() + "' WHERE DeviceID = '" + deviceID + "' ";
-                DbHelperSQL.ExecuteSql(sql);
+                //sql = "UPDATE DeviceInfo SET ip='" + m_asyncSocketUserToken.EndPoints.ToString() + "' WHERE DeviceID = '" + deviceID + "' ";
+                //DbHelperSQL.ExecuteSql(sql);
                 sql = "select * from DevicePing where DeviceID = " + deviceID.ToString();
                 //在DevicePing表中添加连接
                 if (DbHelperSQL.Execute(sql) == "")
@@ -123,10 +123,10 @@ namespace HS
             if (buffer[9] == 0xF0)
             {
                 m_asyncSocketUserToken.EndPoints = m_asyncSocketUserToken.ConnectSocket.RemoteEndPoint;
-                string sql = "UPDATE DevicePing SET activeDT='" + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff") + "' WHERE DeviceID = '" + deviceID + "' ";
+                string sql = "UPDATE DevicePing SET activeDT='" + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff") + "',ip='" + m_asyncSocketUserToken.EndPoints.ToString() + "' WHERE DeviceID = '" + deviceID + "' ";
                 DbHelperSQL.ExecuteSql(sql);
-                sql = "UPDATE DevicePing SET ip='" + m_asyncSocketUserToken.EndPoints.ToString() + "' WHERE DeviceID = '" + deviceID + "' ";
-                DbHelperSQL.ExecuteSql(sql);
+                //sql = "UPDATE DevicePing SET ip='" + m_asyncSocketUserToken.EndPoints.ToString() + "' WHERE DeviceID = '" + deviceID + "' ";
+                //DbHelperSQL.ExecuteSql(sql);
                 return true;
             }
             else

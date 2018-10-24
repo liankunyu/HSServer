@@ -74,7 +74,7 @@ namespace HS
             catch (Exception e)
             {
                 //以后要注释掉
-                MessageBox.Show(e.ToString());
+                //MessageBox.Show(e.ToString());
             }
 
             finally
@@ -261,11 +261,11 @@ namespace HS
                     //    UserToken.SendEventArgs.ConnectSocket.Send(listSend.ToArray());
                 }
                 listSend.Clear();
-                Thread.Sleep(200);
             }
             //}
             string m_message = "send Success";
             m_asyncSocketUserToken.ConnectSocket.Send(PackData(m_message).ToArray());
+            Thread.Sleep(20);
             return true;
             #endregion
         }
