@@ -126,7 +126,7 @@
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SendOption.cs" />
-    <Compile Include="SendThread.cs" />
+    <Compile Include="AsyncSocketCore\SendThread.cs" />
     <EmbeddedResource Include="FrmClass\FrmLink.resx">
       <DependentUpon>FrmLink.cs</DependentUpon>
     </EmbeddedResource>
