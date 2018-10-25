@@ -175,38 +175,19 @@ namespace HS
             {
                 int offset = userToken.ReceiveEventArgs.Offset;
                 int count = userToken.ReceiveEventArgs.BytesTransferred;
-        
-                if (count > 0) //处理接收数据
+                userToken.AsyncSocketInvokeElement = new UploadSocketProtocol(this, userToken);
+                if ((userToken.AsyncSocketInvokeElement == null) & (userToken.ConnectSocket != null)) //存在Socket对象，并且没有绑定协议对象，则进行协议对象绑定
                 {
-                    string msg;
-                    if (count>200) //当收到数据较大时，只截取前200字节
-                    {
-                        msg= Encoding.UTF8.GetString(userToken.ReceiveEventArgs.Buffer, offset, 200);
-                    }
-                    else
-                    {
-                        msg = Encoding.UTF8.GetString(userToken.ReceiveEventArgs.Buffer, offset, count);
-                    }
-                    if ((userToken.AsyncSocketInvokeElement == null) & (msg.Contains("Sec-WebSocket-Key")))
-                    {
-                        userToken.AsyncSocketInvokeElement = new DownloadSocketProtocol(this, userToken);
-                        userToken.ConnectSocket.Send(PackageHandShakeData(userToken.ReceiveEventArgs.Buffer, count));
-                        bool willRaiseEvent = userToken.ConnectSocket.ReceiveAsync(userToken.ReceiveEventArgs); //投递接收请求
-                        if (!willRaiseEvent)
-                            ProcessReceive(userToken.ReceiveEventArgs);
-                    }
-                    else if ((userToken.AsyncSocketInvokeElement == null) & (!msg.Contains("Sec-WebSocket-Key")))
-                    {
-                        userToken.AsyncSocketInvokeElement = new UploadSocketProtocol(this, userToken);
-                        if (!userToken.AsyncSocketInvokeElement.ProcessReceive(userToken.ReceiveEventArgs.Buffer, offset, count))
-                        { //如果处理数据返回失败，则断开连接
-                            CloseClientSocket(userToken);
-                        }
-                        bool willRaiseEvent = userToken.ConnectSocket.ReceiveAsync(userToken.ReceiveEventArgs); //投递接收请求
-                        if (!willRaiseEvent)
-                            ProcessReceive(userToken.ReceiveEventArgs);
-                    }
-                    else
+                    offset = offset + 1;
+                    count = count - 1;
+                }
+                if (userToken.AsyncSocketInvokeElement == null) //如果没有解析对象，提示非法连接并关闭连接
+                {
+                    CloseClientSocket(userToken);
+                }
+                else
+                {
+                    if (count > 0) //处理接收数据
                     {
                         if (!userToken.AsyncSocketInvokeElement.ProcessReceive(userToken.ReceiveEventArgs.Buffer, offset, count))
                         { //如果处理数据返回失败，则断开连接
@@ -219,13 +200,17 @@ namespace HS
                                 ProcessReceive(userToken.ReceiveEventArgs);
                         }
                     }
+                    else
+                    {
+                        bool willRaiseEvent = userToken.ConnectSocket.ReceiveAsync(userToken.ReceiveEventArgs); //投递接收请求
+                        if (!willRaiseEvent)
+                            ProcessReceive(userToken.ReceiveEventArgs);
+                    }
                 }
-                else
-                {
-                    bool willRaiseEvent = userToken.ConnectSocket.ReceiveAsync(userToken.ReceiveEventArgs); //投递接收请求
-                    if (!willRaiseEvent)
-                        ProcessReceive(userToken.ReceiveEventArgs);
-                }
+            }
+            else
+            {
+                CloseClientSocket(userToken);
             }
         }
         #region 打包请求连接数据
@@ -296,7 +281,7 @@ namespace HS
 
             try
             {
-               string sql = "DELETE FROM  DevicePing WHERE ip='" + userToken.ConnectSocket.RemoteEndPoint.ToString()+"'";
+                string sql = "DELETE FROM  DevicePing WHERE ip='" + userToken.ConnectSocket.RemoteEndPoint.ToString() + "'";
                 DbHelperSQL.ExecuteSql(sql);
                 userToken.ConnectSocket.Shutdown(SocketShutdown.Both);
                 userToken.ConnectSocket.Close();
@@ -317,7 +302,7 @@ namespace HS
             //DbHelperSQL.Execute(cmd);
 
             //FrmMain.frm.txtLink.AppendText(DateTime.Now.ToString()+userToken.ConnectSocket.RemoteEndPoint.ToString()+ ":正在关闭");
-  
+
         }
 
         public void CloseAllClient()
