@@ -102,6 +102,7 @@ namespace HS
         {
             int deviceID = AuxiliaryMethod.byte4ToInt(buffer, 1);
             //string gateWay = gate.ToString("d8");
+            //设备连入
             if (buffer[9] == 0xFF)
             {
                 m_asyncSocketUserToken.GateWayId = deviceID;
@@ -120,6 +121,7 @@ namespace HS
                 }
                 return true;
             }
+            //设备心跳包
             if (buffer[9] == 0xF0)
             {
                 m_asyncSocketUserToken.EndPoints = m_asyncSocketUserToken.ConnectSocket.RemoteEndPoint;
@@ -129,6 +131,7 @@ namespace HS
                 //DbHelperSQL.ExecuteSql(sql);
                 return true;
             }
+            //数据上传操作
             else
             {
                 // 创建目录时如果目录已存在，则不会重新创建目录，且不会报错。创建目录时会自动创建路径中各级不存在的目录。

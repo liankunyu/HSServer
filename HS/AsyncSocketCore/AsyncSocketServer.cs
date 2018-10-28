@@ -123,8 +123,8 @@ namespace HS
             m_asyncSocketUserTokenList.Add(userToken); //添加到正在连接列表
             FrmMain.frm.lblCount.Text = m_asyncSocketUserTokenList.Count().ToString();
             userToken.ConnectSocket = acceptEventArgs.AcceptSocket;
-            userToken.ConnectDateTime = DateTime.Now;
-
+            userToken.ConnectDateTime = DateTime.Now;//连入时间
+            userToken.ActiveDateTime = DateTime.Now; //活动时间
             try
             {
                 bool willRaiseEvent = userToken.ConnectSocket.ReceiveAsync(userToken.ReceiveEventArgs); //投递接收请求
@@ -170,7 +170,7 @@ namespace HS
             AsyncSocketUserToken userToken = receiveEventArgs.UserToken as AsyncSocketUserToken;
             if (userToken.ConnectSocket == null)
                 return;
-            userToken.ActiveDateTime = DateTime.Now;
+            userToken.ActiveDateTime = DateTime.Now;//记录客户端活动时间
             if (userToken.ReceiveEventArgs.BytesTransferred > 0 && userToken.ReceiveEventArgs.SocketError == SocketError.Success)
             {
                 int offset = userToken.ReceiveEventArgs.Offset;
