@@ -71,14 +71,21 @@ namespace HS
 
         public void Start(IPEndPoint localEndPoint)
         {
-            listenSocket = new Socket(localEndPoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
-            listenSocket.Bind(localEndPoint);
-            listenSocket.Listen(m_numConnections);
-            FrmMain.frm.txtLink.AppendText("开始监听" + "\r\n");
-            //for (int i = 0; i < 64; i++) //不能循环投递多次AcceptAsync，会造成只接收8000连接后不接收连接了
-            StartAccept(null);
-            m_daemonThread = new DaemonThread(this);    //守护线程，超时断开连接
-            m_sendThread = new SendThread(this);        //发送线程，接收Web发送过来的消息
+            try
+            {
+                listenSocket = new Socket(localEndPoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+                listenSocket.Bind(localEndPoint);
+                listenSocket.Listen(m_numConnections);
+                FrmMain.frm.txtLink.AppendText("开始监听" + "\r\n");
+                //for (int i = 0; i < 64; i++) //不能循环投递多次AcceptAsync，会造成只接收8000连接后不接收连接了
+                StartAccept(null);
+                m_daemonThread = new DaemonThread(this);    //守护线程，超时断开连接
+                m_sendThread = new SendThread(this);        //发送线程，接收Web发送过来的消息
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.ToString());
+            }
         }
 
         public void StartAccept(SocketAsyncEventArgs acceptEventArgs)
