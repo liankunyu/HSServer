@@ -116,7 +116,7 @@ namespace HS
                             newPath = Path.Combine(path, "tmp.xml");
                             using (FileStream fsRead = new FileStream(newPath, FileMode.Open, FileAccess.Read))
                             {
-                                byte[] bf = new byte[1024 * 100];
+                                byte[] bf = new byte[1024 * 200];//声明一个数组存储xml文件数据最大200k
                                 int r = fsRead.Read(bf, 0, bf.Length);
                                 byte[] copy = new byte[r];
                                 List<byte> listSend = new List<byte>();
@@ -134,8 +134,8 @@ namespace HS
                                     UserToken.ConnectSocket.Send(listSend.ToArray());
                                 }
                                 listSend.Clear();
-                                hs_sql = "UPDATE HistSendTable SET SendResult='Send Success!' WHERE SendTime = '" + dt.Rows[i][3].ToString().Trim() + "' ";
-                                DbHelperSQL.ExecuteSql(hs_sql);
+                                //hs_sql = "UPDATE HistSendTable SET SendResult='Send Success!' WHERE SendTime = '" + dt.Rows[i][3].ToString().Trim() + "' ";
+                                //DbHelperSQL.ExecuteSql(hs_sql);
                             }
                         }
                         catch (Exception e)

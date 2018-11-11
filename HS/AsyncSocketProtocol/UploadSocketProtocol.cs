@@ -131,6 +131,15 @@ namespace HS
                 //DbHelperSQL.ExecuteSql(sql);
                 return true;
             }
+            //发送消息成功回执信息
+            if (buffer[9] == 0x0F)
+            {
+                int sendDate = (buffer[10] + buffer[11] * 256);
+                string sendtime=Encoding.Default.GetString(buffer, 12, sendDate);
+                string sql = "UPDATE HistSendTable SET SendResult='Send Success!' WHERE SendTime = '" + sendtime.Trim() + "' ";
+                DbHelperSQL.ExecuteSql(sql);
+                return true;
+            }
             //数据上传操作
             else
             {
