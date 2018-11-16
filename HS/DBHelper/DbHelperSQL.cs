@@ -40,7 +40,7 @@ namespace HS
         }
         public static string Execute(string SQLString)
         {
-            string result = "";
+            string result = "-1";
             using (SqlConnection connection = new SqlConnection(DbHelperSQL.connectionString))
             {
                 using (SqlCommand cmd = new SqlCommand(SQLString, connection))
@@ -103,7 +103,7 @@ namespace HS
         }
         public static int ExecuteSql(string SQLString)
         {
-            int st = 0;
+            int st = -1;
             connectionString = UseXml();
             //int result;
             try
@@ -120,7 +120,7 @@ namespace HS
             }
             catch
             {
-                return 0;
+                return st;
             }
             return st;
         }
@@ -287,7 +287,7 @@ namespace HS
         }
         public static int ExecuteSql(string SQLString, params SqlParameter[] cmdParms)
         {
-            int result;
+            int result=-1;
             using (SqlConnection connection = new SqlConnection(DbHelperSQL.connectionString))
             {
                 using (SqlCommand cmd = new SqlCommand())
